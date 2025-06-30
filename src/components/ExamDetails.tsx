@@ -68,6 +68,7 @@ const ExamDetails: React.FC<StepProps> = ({
       </SelectContent>
     </Select>
 </div>
+</div>
 
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
