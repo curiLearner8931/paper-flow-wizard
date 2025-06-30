@@ -9,4 +9,12 @@ const Index = () => {
   );
 };
 
+const nextStep = () => {
+  if (!examDetails || !templateFile) {
+    toast.error("Please fill in exam details and upload a template.");
+    return;
+  }
+  setStep((prevStep) => prevStep + 1);
+};
+
 export default Index;
