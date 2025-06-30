@@ -50,21 +50,25 @@ const ExamDetails: React.FC<StepProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="grade">Grade/Class</Label>
-          <Select onValueChange={(value) => handleInputChange('grade', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select grade" />
-            </SelectTrigger>
-            <SelectContent>
-              {[...Array(12)].map((_, i) => (
-                <SelectItem key={i + 1} value={`Grade ${i + 1}`}>
-                  Grade {i + 1}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+  <div className="space-y-2">
+    <Label htmlFor="grade">Grade/Class</Label>
+    <Select onValueChange={(value) => handleInputChange('grade', value)}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select grade" />
+      </SelectTrigger>
+      <SelectContent>
+        {[...Array(12)].map((_, i) => {
+          const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][i];
+          return (
+            <SelectItem key={roman} value={`Grade ${roman}`}>
+              Grade {roman}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
+  </div>
+</div>
 
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
@@ -77,14 +81,20 @@ const ExamDetails: React.FC<StepProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="examYear">Academic Year</Label>
-          <Input
-            id="examYear"
-            placeholder="e.g., 2024-25"
-            value={examData.examYear}
-            onChange={(e) => handleInputChange('examYear', e.target.value)}
-          />
-        </div>
+  <Label htmlFor="examYear">Academic Year</Label>
+  <Select onValueChange={(value) => handleInputChange('examYear', value)}>
+    <SelectTrigger>
+      <SelectValue placeholder="Select academic year" />
+    </SelectTrigger>
+    <SelectContent>
+      {["2025-26", "2026-27"].map((year) => (
+        <SelectItem key={year} value={year}>
+          {year}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
 
         <div className="space-y-2">
           <Label>Exam Date</Label>
