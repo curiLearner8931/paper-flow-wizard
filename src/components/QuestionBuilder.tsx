@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { StepProps, QuestionSection, Question } from '../types/exam';
@@ -16,6 +16,7 @@ const QuestionBuilder: React.FC<StepProps> = ({
   const { toast } = useToast();
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [showMarksDialog, setShowMarksDialog] = useState(false);
+  const questionIdCounter = useRef(0);
 
   useEffect(() => {
     // Initialize sections based on numberOfSections or existing sections
@@ -38,14 +39,22 @@ const QuestionBuilder: React.FC<StepProps> = ({
 
   const addQuestion = (sectionId: string) => {
     try {
+      console.log('Adding question to section:', sectionId);
+      
       const section = examData.sections.find(s => s.id === sectionId);
       if (!section) {
         console.error('Section not found:', sectionId);
+        toast({
+          title: "Error",
+          description: "Section not found. Please try again.",
+          variant: "destructive"
+        });
         return;
       }
 
+      questionIdCounter.current += 1;
       const newQuestion: Question = {
-        id: `question-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `question-${sectionId}-${questionIdCounter.current}`,
         text: '',
         marks: 1,
         type: section.type,
@@ -53,11 +62,15 @@ const QuestionBuilder: React.FC<StepProps> = ({
         correctAnswer: section.type === 'MCQ' ? 0 : undefined
       };
 
+      console.log('Creating new question:', newQuestion);
+
       const updatedSections = examData.sections.map(s => 
         s.id === sectionId 
           ? { ...s, questions: [...s.questions, newQuestion] }
           : s
       );
+
+      console.log('Updated sections:', updatedSections);
 
       setExamData({ ...examData, sections: updatedSections });
       
