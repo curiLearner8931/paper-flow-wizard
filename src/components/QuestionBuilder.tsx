@@ -27,8 +27,8 @@ const QuestionBuilder: React.FC<StepProps> = ({
   ];
 
   useEffect(() => {
-    // Initialize sections based on numberOfSections
-    if (examData.sections.length === 0) {
+    // Initialize sections based on numberOfSections or existing sections
+    if (examData.sections.length === 0 && examData.numberOfSections > 0) {
       const initialSections: QuestionSection[] = Array.from(
         { length: examData.numberOfSections },
         (_, index) => ({
@@ -40,17 +40,20 @@ const QuestionBuilder: React.FC<StepProps> = ({
       );
       setExamData({ ...examData, sections: initialSections });
       setOpenSections([initialSections[0]?.id]);
+    } else if (examData.sections.length > 0 && openSections.length === 0) {
+      setOpenSections([examData.sections[0].id]);
     }
   }, [examData.numberOfSections]);
 
   const addQuestion = (sectionId: string) => {
+    const section = examData.sections.find(s => s.id === sectionId);
     const newQuestion: Question = {
       id: `question-${Date.now()}`,
       text: '',
       marks: 1,
-      type: examData.sections.find(s => s.id === sectionId)?.type || 'MCQ',
-      options: ['', '', '', ''],
-      correctAnswer: 0
+      type: section?.type || 'MCQ',
+      options: section?.type === 'MCQ' ? ['', '', '', ''] : undefined,
+      correctAnswer: section?.type === 'MCQ' ? 0 : undefined
     };
 
     const updatedSections = examData.sections.map(section => 
@@ -118,6 +121,10 @@ const QuestionBuilder: React.FC<StepProps> = ({
     );
   };
 
+  const canProceed = () => {
+    return examData.sections.every(section => section.questions.length > 0);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -157,30 +164,31 @@ const QuestionBuilder: React.FC<StepProps> = ({
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Section Title</Label>
-                      <Input
-                        value={section.title}
-                        onChange={(e) => updateSection(section.id, 'title', e.target.value)}
-                        placeholder="e.g., Multiple Choice Questions"
-                      />
-                    </div>
-                    <div className="space-y-2">
                       <Label>Question Type</Label>
                       <Select 
                         value={section.type} 
                         onValueChange={(value) => updateSection(section.id, 'type', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white border-gray-300 shadow-sm">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                           {questionTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
+                            <SelectItem key={type} value={type} className="hover:bg-gray-100">
                               {type}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Section Title</Label>
+                      <Input
+                        value={section.title}
+                        onChange={(e) => updateSection(section.id, 'title', e.target.value)}
+                        placeholder="e.g., Multiple Choice Questions"
+                        className="bg-white border-gray-300 shadow-sm"
+                      />
                     </div>
                   </div>
 
@@ -209,7 +217,7 @@ const QuestionBuilder: React.FC<StepProps> = ({
                                 value={question.text}
                                 onChange={(e) => updateQuestion(section.id, question.id, 'text', e.target.value)}
                                 placeholder="Enter your question here..."
-                                className="min-h-[80px]"
+                                className="min-h-[80px] bg-white border-gray-300 shadow-sm"
                               />
                             </div>
                             <div className="space-y-2">
@@ -219,6 +227,7 @@ const QuestionBuilder: React.FC<StepProps> = ({
                                 value={question.marks}
                                 onChange={(e) => updateQuestion(section.id, question.id, 'marks', parseInt(e.target.value) || 1)}
                                 min="1"
+                                className="bg-white border-gray-300 shadow-sm"
                               />
                             </div>
                           </div>
@@ -236,6 +245,7 @@ const QuestionBuilder: React.FC<StepProps> = ({
                                       updateQuestion(section.id, question.id, 'options', newOptions);
                                     }}
                                     placeholder={`Option ${optIndex + 1}`}
+                                    className="bg-white border-gray-300 shadow-sm"
                                   />
                                   <input
                                     type="radio"
@@ -279,7 +289,7 @@ const QuestionBuilder: React.FC<StepProps> = ({
         </Button>
         <Button
           onClick={nextStep}
-          disabled={examData.sections.every(section => section.questions.length === 0)}
+          disabled={!canProceed()}
           className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Review Exam

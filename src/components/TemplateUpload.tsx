@@ -40,6 +40,13 @@ const TemplateUpload: React.FC<StepProps> = ({
     });
   };
 
+  const handleUploadAreaClick = () => {
+    const fileInput = document.getElementById('template-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -51,21 +58,19 @@ const TemplateUpload: React.FC<StepProps> = ({
         </p>
       </div>
 
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-300">
+      <div 
+        className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-300 cursor-pointer"
+        onClick={!templateFile ? handleUploadAreaClick : undefined}
+      >
         {!templateFile ? (
           <>
             <Upload className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-            <label
-              htmlFor="template-upload"
-              className="cursor-pointer block"
-            >
-              <span className="text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors">
-                Click to upload your template
-              </span>
-              <p className="text-gray-500 mt-2">
-                Only .docx files are accepted
-              </p>
-            </label>
+            <span className="text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors">
+              Click to upload your template
+            </span>
+            <p className="text-gray-500 mt-2">
+              Only .docx files are accepted
+            </p>
             <input
               id="template-upload"
               type="file"

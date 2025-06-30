@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { StepProps } from '../types/exam';
+import { StepProps, QuestionSection } from '../types/exam';
 
 const ExamDetails: React.FC<StepProps> = ({ 
   examData, 
@@ -18,6 +18,7 @@ const ExamDetails: React.FC<StepProps> = ({
   prevStep 
 }) => {
   const [date, setDate] = React.useState<Date>();
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   const handleInputChange = (field: string, value: string | number) => {
     setExamData({
@@ -30,6 +31,37 @@ const ExamDetails: React.FC<StepProps> = ({
     setDate(selectedDate);
     if (selectedDate) {
       handleInputChange('examDate', format(selectedDate, 'yyyy-MM-dd'));
+    }
+  };
+
+  const handleDateConfirm = () => {
+    setIsCalendarOpen(false);
+  };
+
+  const addSection = () => {
+    if (examData.sections.length < 15) {
+      const newSection: QuestionSection = {
+        id: `section-${examData.sections.length + 1}`,
+        title: `Section ${examData.sections.length + 1}`,
+        type: 'MCQ',
+        questions: []
+      };
+      setExamData({
+        ...examData,
+        numberOfSections: examData.numberOfSections + 1,
+        sections: [...examData.sections, newSection]
+      });
+    }
+  };
+
+  const removeSection = (sectionId: string) => {
+    if (examData.sections.length > 1) {
+      const updatedSections = examData.sections.filter(s => s.id !== sectionId);
+      setExamData({
+        ...examData,
+        numberOfSections: examData.numberOfSections - 1,
+        sections: updatedSections
+      });
     }
   };
 
@@ -50,25 +82,24 @@ const ExamDetails: React.FC<StepProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <div className="space-y-2">
-    <Label htmlFor="grade">Grade/Class</Label>
-    <Select onValueChange={(value) => handleInputChange('grade', value)}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select grade" />
-      </SelectTrigger>
-      <SelectContent>
-        {[...Array(12)].map((_, i) => {
-          const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][i];
-          return (
-            <SelectItem key={roman} value={`Grade ${roman}`}>
-              Grade {roman}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-</div>
-</div>
+        <div className="space-y-2">
+          <Label htmlFor="grade">Grade/Class</Label>
+          <Select onValueChange={(value) => handleInputChange('grade', value)}>
+            <SelectTrigger className="bg-white border-gray-300 shadow-sm">
+              <SelectValue placeholder="Select grade" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+              {[...Array(12)].map((_, i) => {
+                const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][i];
+                return (
+                  <SelectItem key={roman} value={`Grade ${roman}`} className="hover:bg-gray-100">
+                    Grade {roman}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
@@ -77,33 +108,34 @@ const ExamDetails: React.FC<StepProps> = ({
             placeholder="e.g., Mathematics, Science"
             value={examData.subject}
             onChange={(e) => handleInputChange('subject', e.target.value)}
+            className="bg-white border-gray-300 shadow-sm"
           />
         </div>
 
         <div className="space-y-2">
-  <Label htmlFor="examYear">Academic Year</Label>
-  <Select onValueChange={(value) => handleInputChange('examYear', value)}>
-    <SelectTrigger>
-      <SelectValue placeholder="Select academic year" />
-    </SelectTrigger>
-    <SelectContent>
-      {["2025-26", "2026-27"].map((year) => (
-        <SelectItem key={year} value={year}>
-          {year}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-</div>
+          <Label htmlFor="examYear">Academic Year</Label>
+          <Select onValueChange={(value) => handleInputChange('examYear', value)}>
+            <SelectTrigger className="bg-white border-gray-300 shadow-sm">
+              <SelectValue placeholder="Select academic year" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+              {["2025-26", "2026-27"].map((year) => (
+                <SelectItem key={year} value={year} className="hover:bg-gray-100">
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="space-y-2">
           <Label>Exam Date</Label>
-          <Popover>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal bg-white border-gray-300 shadow-sm",
                   !date && "text-muted-foreground"
                 )}
               >
@@ -111,7 +143,7 @@ const ExamDetails: React.FC<StepProps> = ({
                 {date ? format(date, "PPP") : "Pick exam date"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 bg-white border border-gray-200 shadow-lg z-50" align="start">
               <Calendar
                 mode="single"
                 selected={date}
@@ -119,6 +151,15 @@ const ExamDetails: React.FC<StepProps> = ({
                 initialFocus
                 className="p-3 pointer-events-auto"
               />
+              <div className="p-3 border-t">
+                <Button 
+                  onClick={handleDateConfirm}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  OK
+                </Button>
+              </div>
             </PopoverContent>
           </Popover>
         </div>
@@ -131,6 +172,7 @@ const ExamDetails: React.FC<StepProps> = ({
             placeholder="e.g., 100"
             value={examData.totalMarks || ''}
             onChange={(e) => handleInputChange('totalMarks', parseInt(e.target.value) || 0)}
+            className="bg-white border-gray-300 shadow-sm"
           />
         </div>
 
@@ -141,24 +183,44 @@ const ExamDetails: React.FC<StepProps> = ({
             placeholder="e.g., 2 Hours"
             value={examData.duration}
             onChange={(e) => handleInputChange('duration', e.target.value)}
+            className="bg-white border-gray-300 shadow-sm"
           />
         </div>
+      </div>
 
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="numberOfSections">Number of Sections</Label>
-          <Select onValueChange={(value) => handleInputChange('numberOfSections', parseInt(value))}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select number of sections" />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5].map((num) => (
-                <SelectItem key={num} value={num.toString()}>
-                  {num} Section{num > 1 ? 's' : ''}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-800">Exam Sections</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={addSection}
+            disabled={examData.sections.length >= 15}
+            className="flex items-center space-x-1 text-sm"
+          >
+            <Plus className="h-3 w-3" />
+            <span>Add Section</span>
+          </Button>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {examData.sections.map((section, index) => (
+            <div key={section.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span className="text-sm font-medium">{section.title}</span>
+              {examData.sections.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeSection(section.id)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="flex justify-between pt-6">
         <Button
