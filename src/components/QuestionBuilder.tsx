@@ -1,15 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, Trash2, ChevronDown, ChevronRight, Image, X } from 'lucide-react';
-import { StepProps, QuestionSection, Question, QuestionType } from '../types/exam';
+import { Plus } from 'lucide-react';
+import { StepProps, QuestionSection, Question } from '../types/exam';
 import { useToast } from '@/hooks/use-toast';
 import MarksValidationDialog from './MarksValidationDialog';
+import SectionCard from './SectionCard';
 
 const QuestionBuilder: React.FC<StepProps> = ({ 
   examData, 
@@ -20,12 +16,6 @@ const QuestionBuilder: React.FC<StepProps> = ({
   const { toast } = useToast();
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [showMarksDialog, setShowMarksDialog] = useState(false);
-
-  const questionTypes: QuestionType[] = [
-    'MCQ', 'Fill in the Blanks', 'True/False', 'Match the Following',
-    'Short Answer', 'Definitions', 'Full Form', 'Unscramble',
-    'Diagram-based', 'Odd One Out'
-  ];
 
   useEffect(() => {
     // Initialize sections based on numberOfSections or existing sections
@@ -185,30 +175,6 @@ const QuestionBuilder: React.FC<StepProps> = ({
     }
   };
 
-  const handleImageUpload = (sectionId: string, questionId: string, file: File) => {
-    try {
-      updateQuestion(sectionId, questionId, 'image', file);
-      toast({
-        title: "Image uploaded",
-        description: "Image has been attached to the question.",
-      });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-    }
-  };
-
-  const removeImage = (sectionId: string, questionId: string) => {
-    try {
-      updateQuestion(sectionId, questionId, 'image', undefined);
-      toast({
-        title: "Image removed",
-        description: "Image has been removed from the question.",
-      });
-    } catch (error) {
-      console.error('Error removing image:', error);
-    }
-  };
-
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => 
       prev.includes(sectionId) 
@@ -245,7 +211,6 @@ const QuestionBuilder: React.FC<StepProps> = ({
     }
   };
 
-  
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -277,203 +242,18 @@ const QuestionBuilder: React.FC<StepProps> = ({
 
       <div className="space-y-4">
         {examData.sections.map((section) => (
-          <Card key={section.id} className="border-2 hover:border-blue-200 transition-colors duration-200">
-            <Collapsible
-              open={openSections.includes(section.id)}
-              onOpenChange={() => toggleSection(section.id)}
-            >
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors duration-200">
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{section.title}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">
-                        {section.questions.length} question{section.questions.length !== 1 ? 's' : ''}
-                      </span>
-                      {examData.sections.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeSection(section.id);
-                          }}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                      {openSections.includes(section.id) ? 
-                        <ChevronDown className="h-5 w-5" /> : 
-                        <ChevronRight className="h-5 w-5" />
-                      }
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-              </CollapsibleTrigger>
-
-              <CollapsibleContent>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Question Type</Label>
-                      <Select 
-                        value={section.type} 
-                        onValueChange={(value) => updateSection(section.id, 'type', value)}
-                      >
-                        <SelectTrigger className="bg-white border-gray-300 shadow-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                          {questionTypes.map((type) => (
-                            <SelectItem key={type} value={type} className="hover:bg-gray-100">
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Section Title</Label>
-                      <Input
-                        value={section.title}
-                        onChange={(e) => updateSection(section.id, 'title', e.target.value)}
-                        placeholder="e.g., Multiple Choice Questions"
-                        className="bg-white border-gray-300 shadow-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {section.questions.map((question, qIndex) => (
-                      <Card key={question.id} className="bg-gray-50 border-gray-200">
-                        <CardContent className="p-4 space-y-4">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-medium text-gray-700">
-                              Question {qIndex + 1}
-                            </h4>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteQuestion(section.id, question.id)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="md:col-span-3 space-y-2">
-                              <Label>Question Text</Label>
-                              <Textarea
-                                value={question.text}
-                                onChange={(e) => updateQuestion(section.id, question.id, 'text', e.target.value)}
-                                placeholder="Enter your question here..."
-                                className="min-h-[80px] bg-white border-gray-300 shadow-sm"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Marks</Label>
-                              <Input
-                                type="number"
-                                value={question.marks}
-                                onChange={(e) => updateQuestion(section.id, question.id, 'marks', parseInt(e.target.value) || 1)}
-                                min="1"
-                                className="bg-white border-gray-300 shadow-sm"
-                              />
-                            </div>
-                          </div>
-
-                          {(section.type === 'Diagram-based' || section.type === 'MCQ') && (
-                            <div className="space-y-2">
-                              <Label>
-                                {section.type === 'Diagram-based' ? 'Diagram Image' : 'Question Image (Optional)'}
-                              </Label>
-                              {!question.image ? (
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                        handleImageUpload(section.id, question.id, file);
-                                      }
-                                    }}
-                                    className="hidden"
-                                    id={`image-${question.id}`}
-                                  />
-                                  <label
-                                    htmlFor={`image-${question.id}`}
-                                    className="cursor-pointer flex flex-col items-center space-y-2"
-                                  >
-                                    <Image className="h-8 w-8 text-gray-400" />
-                                    <span className="text-sm text-gray-500">Click to upload image</span>
-                                  </label>
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                  <div className="flex items-center space-x-2">
-                                    <Image className="h-5 w-5 text-blue-600" />
-                                    <span className="text-sm font-medium text-blue-800">{question.image.name}</span>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeImage(section.id, question.id)}
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {section.type === 'MCQ' && (
-                            <div className="space-y-3">
-                              <Label>Answer Options</Label>
-                              {question.options?.map((option, optIndex) => (
-                                <div key={optIndex} className="flex items-center space-x-2">
-                                  <Input
-                                    value={option}
-                                    onChange={(e) => {
-                                      const newOptions = [...(question.options || [])];
-                                      newOptions[optIndex] = e.target.value;
-                                      updateQuestion(section.id, question.id, 'options', newOptions);
-                                    }}
-                                    placeholder={`Option ${optIndex + 1}`}
-                                    className="bg-white border-gray-300 shadow-sm"
-                                  />
-                                  <input
-                                    type="radio"
-                                    name={`correct-${question.id}`}
-                                    checked={question.correctAnswer === optIndex}
-                                    onChange={() => updateQuestion(section.id, question.id, 'correctAnswer', optIndex)}
-                                    className="text-green-500"
-                                  />
-                                  <Label className="text-sm text-gray-600">Correct</Label>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                    <Button
-                      variant="outline"
-                      onClick={() => addQuestion(section.id)}
-                      className="w-full border-dashed border-2 hover:border-blue-400 hover:bg-blue-50 transition-colors duration-200"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Sub-question
-                    </Button>
-                  </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </Card>
+          <SectionCard
+            key={section.id}
+            section={section}
+            isOpen={openSections.includes(section.id)}
+            canRemove={examData.sections.length > 1}
+            onToggle={() => toggleSection(section.id)}
+            onUpdate={(field, value) => updateSection(section.id, field, value)}
+            onRemove={() => removeSection(section.id)}
+            onAddQuestion={() => addQuestion(section.id)}
+            onUpdateQuestion={(questionId, field, value) => updateQuestion(section.id, questionId, field, value)}
+            onDeleteQuestion={(questionId) => deleteQuestion(section.id, questionId)}
+          />
         ))}
       </div>
 
