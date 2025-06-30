@@ -1,5 +1,6 @@
 
 import ExamGenerator from '../components/ExamGenerator';
+import { toast } from "sonner";
 
 const Index = () => {
   return (
