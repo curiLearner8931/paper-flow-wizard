@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,126 +44,169 @@ const QuestionBuilder: React.FC<StepProps> = ({
     } else if (examData.sections.length > 0 && openSections.length === 0) {
       setOpenSections([examData.sections[0].id]);
     }
-  }, [examData.numberOfSections]);
+  }, [examData.numberOfSections, examData.sections.length, setExamData]);
 
   const addQuestion = (sectionId: string) => {
-    const section = examData.sections.find(s => s.id === sectionId);
-    const newQuestion: Question = {
-      id: `question-${Date.now()}`,
-      text: '',
-      marks: 1,
-      type: section?.type || 'MCQ',
-      options: section?.type === 'MCQ' ? ['', '', '', ''] : undefined,
-      correctAnswer: section?.type === 'MCQ' ? 0 : undefined
-    };
+    try {
+      const section = examData.sections.find(s => s.id === sectionId);
+      if (!section) {
+        console.error('Section not found:', sectionId);
+        return;
+      }
 
-    const updatedSections = examData.sections.map(section => 
-      section.id === sectionId 
-        ? { ...section, questions: [...section.questions, newQuestion] }
-        : section
-    );
+      const newQuestion: Question = {
+        id: `question-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        text: '',
+        marks: 1,
+        type: section.type,
+        options: section.type === 'MCQ' ? ['', '', '', ''] : undefined,
+        correctAnswer: section.type === 'MCQ' ? 0 : undefined
+      };
 
-    setExamData({ ...examData, sections: updatedSections });
-    toast({
-      title: "Question added",
-      description: "New question has been added to the section.",
-    });
+      const updatedSections = examData.sections.map(s => 
+        s.id === sectionId 
+          ? { ...s, questions: [...s.questions, newQuestion] }
+          : s
+      );
+
+      setExamData({ ...examData, sections: updatedSections });
+      
+      toast({
+        title: "Question added",
+        description: "New question has been added to the section.",
+      });
+    } catch (error) {
+      console.error('Error adding question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add question. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const updateQuestion = (sectionId: string, questionId: string, field: string, value: any) => {
-    const updatedSections = examData.sections.map(section => 
-      section.id === sectionId 
-        ? {
-            ...section,
-            questions: section.questions.map(question =>
-              question.id === questionId
-                ? { ...question, [field]: value }
-                : question
-            )
-          }
-        : section
-    );
+    try {
+      const updatedSections = examData.sections.map(section => 
+        section.id === sectionId 
+          ? {
+              ...section,
+              questions: section.questions.map(question =>
+                question.id === questionId
+                  ? { ...question, [field]: value }
+                  : question
+              )
+            }
+          : section
+      );
 
-    setExamData({ ...examData, sections: updatedSections });
+      setExamData({ ...examData, sections: updatedSections });
+    } catch (error) {
+      console.error('Error updating question:', error);
+    }
   };
 
   const updateSection = (sectionId: string, field: string, value: any) => {
-    const updatedSections = examData.sections.map(section => 
-      section.id === sectionId 
-        ? { ...section, [field]: value }
-        : section
-    );
+    try {
+      const updatedSections = examData.sections.map(section => 
+        section.id === sectionId 
+          ? { ...section, [field]: value }
+          : section
+      );
 
-    setExamData({ ...examData, sections: updatedSections });
+      setExamData({ ...examData, sections: updatedSections });
+    } catch (error) {
+      console.error('Error updating section:', error);
+    }
   };
 
   const deleteQuestion = (sectionId: string, questionId: string) => {
-    const updatedSections = examData.sections.map(section => 
-      section.id === sectionId 
-        ? {
-            ...section,
-            questions: section.questions.filter(q => q.id !== questionId)
-          }
-        : section
-    );
+    try {
+      const updatedSections = examData.sections.map(section => 
+        section.id === sectionId 
+          ? {
+              ...section,
+              questions: section.questions.filter(q => q.id !== questionId)
+            }
+          : section
+      );
 
-    setExamData({ ...examData, sections: updatedSections });
-    toast({
-      title: "Question deleted",
-      description: "Question has been removed from the section.",
-    });
+      setExamData({ ...examData, sections: updatedSections });
+      toast({
+        title: "Question deleted",
+        description: "Question has been removed from the section.",
+      });
+    } catch (error) {
+      console.error('Error deleting question:', error);
+    }
   };
 
   const addSection = () => {
-    if (examData.sections.length < 15) {
-      const newSection: QuestionSection = {
-        id: `section-${examData.sections.length + 1}`,
-        title: `Section ${examData.sections.length + 1}`,
-        type: 'MCQ',
-        questions: []
-      };
-      const updatedSections = [...examData.sections, newSection];
-      setExamData({
-        ...examData,
-        numberOfSections: examData.numberOfSections + 1,
-        sections: updatedSections
-      });
-      toast({
-        title: "Section added",
-        description: "New section has been added.",
-      });
+    try {
+      if (examData.sections.length < 15) {
+        const newSection: QuestionSection = {
+          id: `section-${examData.sections.length + 1}`,
+          title: `Section ${examData.sections.length + 1}`,
+          type: 'MCQ',
+          questions: []
+        };
+        const updatedSections = [...examData.sections, newSection];
+        setExamData({
+          ...examData,
+          numberOfSections: examData.numberOfSections + 1,
+          sections: updatedSections
+        });
+        toast({
+          title: "Section added",
+          description: "New section has been added.",
+        });
+      }
+    } catch (error) {
+      console.error('Error adding section:', error);
     }
   };
 
   const removeSection = (sectionId: string) => {
-    if (examData.sections.length > 1) {
-      const updatedSections = examData.sections.filter(s => s.id !== sectionId);
-      setExamData({
-        ...examData,
-        numberOfSections: examData.numberOfSections - 1,
-        sections: updatedSections
-      });
-      toast({
-        title: "Section removed",
-        description: "Section has been removed.",
-      });
+    try {
+      if (examData.sections.length > 1) {
+        const updatedSections = examData.sections.filter(s => s.id !== sectionId);
+        setExamData({
+          ...examData,
+          numberOfSections: examData.numberOfSections - 1,
+          sections: updatedSections
+        });
+        toast({
+          title: "Section removed",
+          description: "Section has been removed.",
+        });
+      }
+    } catch (error) {
+      console.error('Error removing section:', error);
     }
   };
 
   const handleImageUpload = (sectionId: string, questionId: string, file: File) => {
-    updateQuestion(sectionId, questionId, 'image', file);
-    toast({
-      title: "Image uploaded",
-      description: "Image has been attached to the question.",
-    });
+    try {
+      updateQuestion(sectionId, questionId, 'image', file);
+      toast({
+        title: "Image uploaded",
+        description: "Image has been attached to the question.",
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
   };
 
   const removeImage = (sectionId: string, questionId: string) => {
-    updateQuestion(sectionId, questionId, 'image', undefined);
-    toast({
-      title: "Image removed",
-      description: "Image has been removed from the question.",
-    });
+    try {
+      updateQuestion(sectionId, questionId, 'image', undefined);
+      toast({
+        title: "Image removed",
+        description: "Image has been removed from the question.",
+      });
+    } catch (error) {
+      console.error('Error removing image:', error);
+    }
   };
 
   const toggleSection = (sectionId: string) => {
@@ -176,23 +218,34 @@ const QuestionBuilder: React.FC<StepProps> = ({
   };
 
   const calculateTotalMarks = () => {
-    return examData.sections.reduce((total, section) => 
-      total + section.questions.reduce((sectionTotal, question) => sectionTotal + question.marks, 0), 0
-    );
+    try {
+      return examData.sections.reduce((total, section) => 
+        total + section.questions.reduce((sectionTotal, question) => sectionTotal + (question.marks || 0), 0), 0
+      );
+    } catch (error) {
+      console.error('Error calculating total marks:', error);
+      return examData.totalMarks;
+    }
   };
 
   const canProceed = () => {
-    const hasQuestions = examData.sections.every(section => section.questions.length > 0);
-    const totalMarks = calculateTotalMarks();
-    
-    if (hasQuestions && totalMarks !== examData.totalMarks) {
-      setShowMarksDialog(true);
+    try {
+      const hasQuestions = examData.sections.every(section => section.questions.length > 0);
+      const totalMarks = calculateTotalMarks();
+      
+      if (hasQuestions && totalMarks !== examData.totalMarks) {
+        setShowMarksDialog(true);
+        return false;
+      }
+      
+      return hasQuestions;
+    } catch (error) {
+      console.error('Error checking if can proceed:', error);
       return false;
     }
-    
-    return hasQuestions;
   };
 
+  
   return (
     <div className="space-y-6">
       <div className="text-center">
