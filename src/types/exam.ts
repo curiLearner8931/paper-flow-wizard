@@ -1,4 +1,3 @@
-
 export interface Question {
   id: string;
   text: string;
@@ -6,6 +5,7 @@ export interface Question {
   type: QuestionType;
   options?: string[];
   correctAnswer?: number;
+  image?: File;
 }
 
 export interface QuestionSection {

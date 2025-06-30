@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { StepProps, QuestionSection } from '../types/exam';
@@ -38,31 +37,33 @@ const ExamDetails: React.FC<StepProps> = ({
     setIsCalendarOpen(false);
   };
 
-  const addSection = () => {
-    if (examData.sections.length < 15) {
-      const newSection: QuestionSection = {
-        id: `section-${examData.sections.length + 1}`,
-        title: `Section ${examData.sections.length + 1}`,
-        type: 'MCQ',
-        questions: []
-      };
-      setExamData({
-        ...examData,
-        numberOfSections: examData.numberOfSections + 1,
-        sections: [...examData.sections, newSection]
-      });
+  const handleSectionCountChange = (value: string) => {
+    const newCount = parseInt(value);
+    const currentSections = examData.sections;
+    
+    let updatedSections: QuestionSection[] = [];
+    
+    if (newCount > currentSections.length) {
+      // Add new sections
+      updatedSections = [...currentSections];
+      for (let i = currentSections.length; i < newCount; i++) {
+        updatedSections.push({
+          id: `section-${i + 1}`,
+          title: `Section ${i + 1}`,
+          type: 'MCQ',
+          questions: []
+        });
+      }
+    } else {
+      // Keep only the first 'newCount' sections
+      updatedSections = currentSections.slice(0, newCount);
     }
-  };
-
-  const removeSection = (sectionId: string) => {
-    if (examData.sections.length > 1) {
-      const updatedSections = examData.sections.filter(s => s.id !== sectionId);
-      setExamData({
-        ...examData,
-        numberOfSections: examData.numberOfSections - 1,
-        sections: updatedSections
-      });
-    }
+    
+    setExamData({
+      ...examData,
+      numberOfSections: newCount,
+      sections: updatedSections
+    });
   };
 
   const isFormValid = () => {
@@ -189,34 +190,29 @@ const ExamDetails: React.FC<StepProps> = ({
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-800">Exam Sections</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={addSection}
-            disabled={examData.sections.length >= 15}
-            className="flex items-center space-x-1 text-sm"
+        <div className="space-y-2">
+          <Label htmlFor="numberOfSections">Number of Sections</Label>
+          <Select 
+            value={examData.numberOfSections.toString()} 
+            onValueChange={handleSectionCountChange}
           >
-            <Plus className="h-3 w-3" />
-            <span>Add Section</span>
-          </Button>
+            <SelectTrigger className="bg-white border-gray-300 shadow-sm max-w-xs">
+              <SelectValue placeholder="Select number of sections" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+              {[...Array(15)].map((_, i) => (
+                <SelectItem key={i + 1} value={(i + 1).toString()} className="hover:bg-gray-100">
+                  {i + 1} Section{i + 1 !== 1 ? 's' : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {examData.sections.map((section, index) => (
             <div key={section.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <span className="text-sm font-medium">{section.title}</span>
-              {examData.sections.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeSection(section.id)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              )}
             </div>
           ))}
         </div>

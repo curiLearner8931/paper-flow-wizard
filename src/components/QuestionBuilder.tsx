@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, Image, X } from 'lucide-react';
 import { StepProps, QuestionSection, Question, QuestionType } from '../types/exam';
 import { useToast } from '@/hooks/use-toast';
+import MarksValidationDialog from './MarksValidationDialog';
 
 const QuestionBuilder: React.FC<StepProps> = ({ 
   examData, 
@@ -19,6 +20,7 @@ const QuestionBuilder: React.FC<StepProps> = ({
 }) => {
   const { toast } = useToast();
   const [openSections, setOpenSections] = useState<string[]>([]);
+  const [showMarksDialog, setShowMarksDialog] = useState(false);
 
   const questionTypes: QuestionType[] = [
     'MCQ', 'Fill in the Blanks', 'True/False', 'Match the Following',
@@ -113,6 +115,58 @@ const QuestionBuilder: React.FC<StepProps> = ({
     });
   };
 
+  const addSection = () => {
+    if (examData.sections.length < 15) {
+      const newSection: QuestionSection = {
+        id: `section-${examData.sections.length + 1}`,
+        title: `Section ${examData.sections.length + 1}`,
+        type: 'MCQ',
+        questions: []
+      };
+      const updatedSections = [...examData.sections, newSection];
+      setExamData({
+        ...examData,
+        numberOfSections: examData.numberOfSections + 1,
+        sections: updatedSections
+      });
+      toast({
+        title: "Section added",
+        description: "New section has been added.",
+      });
+    }
+  };
+
+  const removeSection = (sectionId: string) => {
+    if (examData.sections.length > 1) {
+      const updatedSections = examData.sections.filter(s => s.id !== sectionId);
+      setExamData({
+        ...examData,
+        numberOfSections: examData.numberOfSections - 1,
+        sections: updatedSections
+      });
+      toast({
+        title: "Section removed",
+        description: "Section has been removed.",
+      });
+    }
+  };
+
+  const handleImageUpload = (sectionId: string, questionId: string, file: File) => {
+    updateQuestion(sectionId, questionId, 'image', file);
+    toast({
+      title: "Image uploaded",
+      description: "Image has been attached to the question.",
+    });
+  };
+
+  const removeImage = (sectionId: string, questionId: string) => {
+    updateQuestion(sectionId, questionId, 'image', undefined);
+    toast({
+      title: "Image removed",
+      description: "Image has been removed from the question.",
+    });
+  };
+
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => 
       prev.includes(sectionId) 
@@ -121,8 +175,22 @@ const QuestionBuilder: React.FC<StepProps> = ({
     );
   };
 
+  const calculateTotalMarks = () => {
+    return examData.sections.reduce((total, section) => 
+      total + section.questions.reduce((sectionTotal, question) => sectionTotal + question.marks, 0), 0
+    );
+  };
+
   const canProceed = () => {
-    return examData.sections.every(section => section.questions.length > 0);
+    const hasQuestions = examData.sections.every(section => section.questions.length > 0);
+    const totalMarks = calculateTotalMarks();
+    
+    if (hasQuestions && totalMarks !== examData.totalMarks) {
+      setShowMarksDialog(true);
+      return false;
+    }
+    
+    return hasQuestions;
   };
 
   return (
@@ -132,8 +200,26 @@ const QuestionBuilder: React.FC<StepProps> = ({
           Build Your Questions
         </h2>
         <p className="text-gray-600">
-          Add questions for each section of your exam
+          Add questions for each section of your exam ({examData.numberOfSections} sections)
         </p>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+          Total Marks: {calculateTotalMarks()} / {examData.totalMarks}
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={addSection}
+            disabled={examData.sections.length >= 15}
+            className="flex items-center space-x-1"
+          >
+            <Plus className="h-3 w-3" />
+            <span>Add Section</span>
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -151,6 +237,19 @@ const QuestionBuilder: React.FC<StepProps> = ({
                       <span className="text-sm text-gray-500">
                         {section.questions.length} question{section.questions.length !== 1 ? 's' : ''}
                       </span>
+                      {examData.sections.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeSection(section.id);
+                          }}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                       {openSections.includes(section.id) ? 
                         <ChevronDown className="h-5 w-5" /> : 
                         <ChevronRight className="h-5 w-5" />
@@ -232,6 +331,52 @@ const QuestionBuilder: React.FC<StepProps> = ({
                             </div>
                           </div>
 
+                          {(section.type === 'Diagram-based' || section.type === 'MCQ') && (
+                            <div className="space-y-2">
+                              <Label>
+                                {section.type === 'Diagram-based' ? 'Diagram Image' : 'Question Image (Optional)'}
+                              </Label>
+                              {!question.image ? (
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        handleImageUpload(section.id, question.id, file);
+                                      }
+                                    }}
+                                    className="hidden"
+                                    id={`image-${question.id}`}
+                                  />
+                                  <label
+                                    htmlFor={`image-${question.id}`}
+                                    className="cursor-pointer flex flex-col items-center space-y-2"
+                                  >
+                                    <Image className="h-8 w-8 text-gray-400" />
+                                    <span className="text-sm text-gray-500">Click to upload image</span>
+                                  </label>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                  <div className="flex items-center space-x-2">
+                                    <Image className="h-5 w-5 text-blue-600" />
+                                    <span className="text-sm font-medium text-blue-800">{question.image.name}</span>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeImage(section.id, question.id)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {section.type === 'MCQ' && (
                             <div className="space-y-3">
                               <Label>Answer Options</Label>
@@ -278,6 +423,13 @@ const QuestionBuilder: React.FC<StepProps> = ({
           </Card>
         ))}
       </div>
+
+      <MarksValidationDialog
+        isOpen={showMarksDialog}
+        onClose={() => setShowMarksDialog(false)}
+        expectedMarks={examData.totalMarks}
+        actualMarks={calculateTotalMarks()}
+      />
 
       <div className="flex justify-between pt-6">
         <Button
