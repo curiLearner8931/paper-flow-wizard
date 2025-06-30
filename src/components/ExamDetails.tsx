@@ -67,7 +67,6 @@ const ExamDetails: React.FC<StepProps> = ({
         })}
       </SelectContent>
     </Select>
-  </div>
 </div>
 
         <div className="space-y-2">
@@ -159,7 +158,6 @@ const ExamDetails: React.FC<StepProps> = ({
             </SelectContent>
           </Select>
         </div>
-      </div>
 
       <div className="flex justify-between pt-6">
         <Button
